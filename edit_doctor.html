@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Edycja grafiku</h3>
+
+<form method="post" style="max-width: 400px;">
+  <div class="mb-2">
+    <label class="form-label">Lekarz</label>
+    <input class="form-control" value="{{ doctor.name }}" disabled>
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Godziny pracy</label>
+    <input class="form-control" name="hours" value="{{ doctor.hours }}" required>
+  </div>
+  <button class="btn btn-primary">Zapisz</button>
+</form>
+
+<a href="{{ url_for('doctors') }}" class="btn btn-secondary mt-3">← Powrót</a>
+{% endblock %}
