@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Grafiki lekarzy</h3>
+
+<hr>
+
+<h4>Dodaj lekarza</h4>
+<form method="post" style="max-width: 400px;">
+  <div class="mb-2">
+    <input class="form-control" name="name" placeholder="Imię i nazwisko" required>
+  </div>
+  <div class="mb-2">
+    <input class="form-control" name="hours" placeholder="Godziny (np. 8:00-16:00)" required>
+  </div>
+  <button class="btn btn-success">Dodaj</button>
+</form>
+
+<hr>
+
+<h4>Lista lekarzy</h4>
+<table class="table table-striped">
+  <tr>
+    <th>Lekarz</th>
+    <th>Godziny</th>
+    <th>Akcja</th>
+  </tr>
+  {% for d in doctors %}
+  <tr>
+    <td>{{ d.name }}</td>
+    <td>{{ d.hours }}</td>
+    <td>
+      <a href="{{ url_for('edit_doctor', doctor_id=d.id) }}" class="btn btn-sm btn-primary">
+        Edytuj grafik
+      </a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Powrót</a>
+{% endblock %}
