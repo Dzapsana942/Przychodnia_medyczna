@@ -30,3 +30,13 @@ INSERT OR IGNORE INTO patients (name, status, doctor_id, position) VALUES ('Mari
 
 INSERT INTO users (username, password, role)
 VALUES ('lekarz1', 'haslo123', 'lekarz');
+
+CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doctor_id INTEGER,
+    patient_id INTEGER,
+    appointment_time TEXT,
+    status TEXT DEFAULT 'wolny'
+);
+INSERT INTO appointments (doctor_id, appointment_time) VALUES (1, '2025-12-18 10:00');
+INSERT INTO appointments (doctor_id, appointment_time) VALUES (1, '2025-12-18 11:00');

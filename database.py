@@ -7,7 +7,7 @@ def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-/usunac
+
 def init_db():
     if not DB_PATH.exists():
         conn = get_conn()

@@ -190,8 +190,6 @@ def move(patient_id, direction):
 
     flash("Pacjent przesunięty", "success")
     return redirect(url_for("dashboard"))
-
-
 @app.route("/note/<int:patient_id>", methods=["GET", "POST"])
 @login_required
 def note(patient_id):
@@ -207,7 +205,11 @@ def note(patient_id):
         conn.close()
 
         flash("Notatka zapisana!", "success")
-        return redirect(url_for("dashboard"))
+
+        if session.get("role") == "lekarz":
+            return redirect(url_for("doctor_panel"))
+        else:
+            return redirect(url_for("dashboard"))
 
     patient = conn.execute(
         "SELECT * FROM patients WHERE id=?", (patient_id,)
@@ -216,7 +218,10 @@ def note(patient_id):
 
     if not patient:
         flash("Nie znaleziono pacjenta!", "danger")
-        return redirect(url_for("dashboard"))
+        if session.get("role") == "lekarz":
+            return redirect(url_for("doctor_panel"))
+        else:
+            return redirect(url_for("dashboard"))
 
     return render_template("note.html", patient=patient)
 
@@ -292,6 +297,53 @@ def edit_doctor(doctor_id):
 
     return render_template("edit_doctor.html", doctor=doctor)
 
+@app.route("/appointments")
+@login_required
+def appointments():
+    conn = get_conn()
+    available = conn.execute(
+        "SELECT a.id, a.appointment_time, d.name AS doctor_name "
+        "FROM appointments a "
+        "JOIN doctors d ON a.doctor_id = d.id "
+        "WHERE a.status='wolny'"
+    ).fetchall()
+    conn.close()
+
+    return render_template("appointments.html", appointments=available)
+@app.route("/reserve/<int:appointment_id>", methods=["GET", "POST"])
+@login_required
+def reserve_appointment(appointment_id):
+    conn = get_conn()
+
+    if request.method == "POST":
+        name = request.form["name"]
+
+        # dodanie pacjenta
+        last_pos = conn.execute("SELECT MAX(position) AS maxpos FROM patients").fetchone()["maxpos"]
+        next_pos = 1 if last_pos is None else last_pos + 1
+        conn.execute(
+            "INSERT INTO patients (name, doctor_id, position, status) VALUES (?, ?, ?, 'oczekuje')",
+            (name, appointment_id, next_pos)
+        )
+        # aktualizacja statusu terminu
+        conn.execute(
+            "UPDATE appointments SET status='zarezerwowany', patient_id=(SELECT MAX(id) FROM patients) WHERE id=?",
+            (appointment_id,)
+        )
+        conn.commit()
+        conn.close()
+
+        flash(f"Rezerwacja zapisana! Twój numer w kolejce: {next_pos}", "success")
+        return redirect(url_for("appointments"))
+
+    appointment = conn.execute(
+        "SELECT a.id, a.appointment_time, d.name AS doctor_name "
+        "FROM appointments a JOIN doctors d ON a.doctor_id = d.id "
+        "WHERE a.id=?", (appointment_id,)
+    ).fetchone()
+    conn.close()
+
+    return render_template("reserve_form.html", appointment=appointment)
 
 
 if __name__ == "__main__":

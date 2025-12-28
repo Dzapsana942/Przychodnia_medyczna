@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dostępne terminy wizyt</h2>
+<table>
+  <tr>
+    <th>Lekarz</th>
+    <th>Termin</th>
+    <th>Rezerwacja</th>
+  </tr>
+  {% for a in appointments %}
+  <tr>
+    <td>{{ a.doctor_name }}</td>
+    <td>{{ a.appointment_time }}</td>
+    <td>
+      <a href="{{ url_for('reserve_appointment', appointment_id=a.id) }}" class="btn btn-primary">
+        Zarezerwuj
+      </a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
