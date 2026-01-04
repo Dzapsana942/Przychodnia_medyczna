@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Notatka dla pacjenta: {{ patient.name }}</h3>
+
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label">Notatka z wizyty</label>
+    <textarea class="form-control" name="note" rows="6" required>{{ patient.note }}</textarea>
+  </div>
+
+  <button class="btn btn-primary">Zapisz</button>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Powrót</a>
+</form>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Panel lekarza</h2>
+<p>Zalogowany: {{ username }}</p>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Pozycja</th>
+      <th>Pacjent</th>
+      <th>ETA</th>
+      <th>Akcja</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for p in patients %}
+    <tr>
+      <td>{{ p.position }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ (p.position - 1) * 15 }} min</td>
+      <td>
+        <a href="{{ url_for('note', patient_id=p.id) }}" class="btn btn-sm btn-primary">
+          Notatka
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
