@@ -40,3 +40,11 @@ CREATE TABLE IF NOT EXISTS appointments (
 );
 INSERT INTO appointments (doctor_id, appointment_time) VALUES (1, '2025-12-18 10:00');
 INSERT INTO appointments (doctor_id, appointment_time) VALUES (1, '2025-12-18 11:00');
+
+CREATE TABLE IF NOT EXISTS doctor_schedule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doctor_id INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL, -- 1=pon, 7=niedz
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL
+);

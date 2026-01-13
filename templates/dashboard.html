@@ -1,61 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Panel rejestratorki</h3>
+<div class="card p-4 mb-4">
+  <h3 class="mb-3">Panel rejestratorki</h3>
 
-<hr>
-
-<h4>Dodaj pacjenta</h4>
-<form method="post" action="{{ url_for('add_patient') }}">
-  <div class="input-group mb-3" style="max-width: 400px;">
-    <input class="form-control" name="name" placeholder="Imię i nazwisko pacjenta" required>
-    <button class="btn btn-success">Dodaj</button>
+  <!-- Dodawanie pacjenta -->
+  <div class="mb-4">
+    <h5>Dodaj pacjenta</h5>
+    <form method="post" action="{{ url_for('add_patient') }}">
+      <div class="input-group" style="max-width: 400px;">
+        <input class="form-control" name="name" placeholder="Imię i nazwisko pacjenta" required>
+        <button class="btn btn-success">Dodaj</button>
+      </div>
+    </form>
   </div>
-</form>
 
-<hr>
-
-<h4>Pacjenci w kolejce</h4>
-<table class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Pacjent</th>
-      <th>ETA</th>
-      <th>Przesuń</th>
-      <th>Akcja</th>
-      <th>Notatka</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {% for p in patients %}
-    <tr>
-      <td>{{ p.position }}</td>
-      <td>{{ p.name }}</td>
-
-      <td>
-        {% for e in eta_list %}
-          {% if e.id == p.id %}
-            {{ e.eta }}
-          {% endif %}
+  <!-- Pacjenci w kolejce -->
+  <div class="mb-3">
+    <h5>Pacjenci w kolejce</h5>
+    <table class="table table-striped table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pacjent</th>
+          <th>ETA</th>
+          <th>Przesuń</th>
+          <th>Akcja</th>
+          <th>Notatka</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td>{{ p.position }}</td>
+          <td>{{ p.name }}</td>
+          <td>
+            {% for e in eta_list %}
+              {% if e.id == p.id %}
+                {{ e.eta }}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td>
+            <a href="{{ url_for('move', patient_id=p.id, direction='up') }}" class="btn btn-sm btn-primary">▲</a>
+            <a href="{{ url_for('move', patient_id=p.id, direction='down') }}" class="btn btn-sm btn-primary">▼</a>
+          </td>
+          <td>
+            <a href="{{ url_for('mark_served', patient_id=p.id) }}" class="btn btn-sm btn-success">Obsłużony</a>
+          </td>
+          <td>
+            <a href="{{ url_for('note', patient_id=p.id) }}" class="btn btn-sm btn-warning">Notatka</a>
+          </td>
+        </tr>
         {% endfor %}
-      </td>
-
-      <td>
-        <a href="{{ url_for('move', patient_id=p.id, direction='up') }}" class="btn btn-sm btn-outline-primary">▲</a>
-        <a href="{{ url_for('move', patient_id=p.id, direction='down') }}" class="btn btn-sm btn-outline-primary">▼</a>
-      </td>
-
-      <td>
-        <a href="{{ url_for('mark_served', patient_id=p.id) }}" class="btn btn-sm btn-success">Obsłużony</a>
-      </td>
-
-      <td>
-        <a href="{{ url_for('note', patient_id=p.id) }}" class="btn btn-sm btn-warning">Notatka</a>
-      </td>
-
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

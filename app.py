@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from database import get_conn, init_db
+from database import get_doctor_schedule,add_schedule
 import datetime
 
 app = Flask(__name__)
@@ -344,6 +345,27 @@ def reserve_appointment(appointment_id):
     conn.close()
 
     return render_template("reserve_form.html", appointment=appointment)
+@app.route("/doctor/<int:doctor_id>/schedule")
+def doctor_schedule(doctor_id):
+    schedule = get_doctor_schedule(doctor_id)
+    doctor = {"id": doctor_id}
+
+    return render_template(
+        "edit_doctor.html",
+        doctor=doctor,
+        schedule=schedule
+    )
+@app.route("/schedule/add", methods=["POST"])
+def schedule_add():
+    doctor_id = int(request.form["doctor_id"])
+    day_of_week = int(request.form["day"])
+    start_time = request.form["start_time"]
+    end_time = request.form["end_time"]
+
+    add_schedule(doctor_id, day_of_week, start_time, end_time)
+
+    flash("Grafik zapisany ✅", "success")
+    return redirect(f"/doctor/{doctor_id}/schedule")
 
 
 if __name__ == "__main__":
