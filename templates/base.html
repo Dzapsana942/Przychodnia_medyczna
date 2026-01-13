@@ -93,31 +93,66 @@
 
     /* Małe poprawki marginesów */
     .container.mt-4 { margin-top: 20px !important; }
+    /* Przycisk wyloguj */
+.btn-danger {
+  background-color: #f28b82;  /* jasnoczerwony */
+  color: #fff;
+  border: none;
+}
+.btn-danger:hover {
+  background-color: #e06666;
+}
+
+/* Hover na wierszach tabeli */
+.table tbody tr:hover {
+  background-color: #fce8e6; /* delikatny jasnoczerwony */
+  color: #0b3d91; /* granatowy tekst */
+}
+/* Karty pacjentów w panelu lekarza */
+.card {
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('dashboard') }}">Przychodnia</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          {% if username %}
-            <li class="nav-item me-3">
-              <span class="navbar-text">Zalogowany: <strong>{{ username }}</strong></span>
-            </li>
-            <li class="nav-item">
-              <a class="btn btn-primary btn-sm" href="{{ url_for('doctors') }}">Grafiki lekarzy</a>
-            </li>
-            <li class="nav-item ms-2">
-              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('logout') }}">Wyloguj</a>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg fixed-top shadow-sm" style="background-color: #0b3d91;">
+  <div class="container-fluid">
+    <!-- Logo / nazwa -->
+    <a class="navbar-brand fw-bold fs-4 text-white" href="{{ url_for('dashboard') }}">
+      Przychodnia
+    </a>
+
+  <!-- Rozdzielone elementy po prawej -->
+<div class="collapse navbar-collapse justify-content-end">
+  <ul class="navbar-nav align-items-center">
+    {% if username %}
+      <li class="nav-item me-3">
+        <span class="navbar-text fs-6">Zalogowany: <strong>{{ username }}</strong></span>
+      </li>
+      <li class="nav-item me-2">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('doctors') }}">Grafiki lekarzy</a>
+      </li>
+      <li class="nav-item">
+        <a class="btn btn-danger btn-sm" href="{{ url_for('logout') }}">Wyloguj</a>
+      </li>
+    {% endif %}
+  </ul>
+</div>
+
+</nav>
+
+
 
   <!-- Główna treść -->
   <div class="container mt-4">

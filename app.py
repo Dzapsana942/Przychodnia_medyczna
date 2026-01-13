@@ -102,6 +102,7 @@ def dashboard():
         eta_list=eta_list
     )
 
+
 @app.route("/doctor")
 @login_required
 def doctor_panel():
@@ -117,11 +118,26 @@ def doctor_panel():
     """).fetchall()
     conn.close()
 
+    # dodanie pola 'visit_time' dla każdego pacjenta
+    from datetime import datetime, timedelta
+    AVG_VISIT_MIN = 15
+
+    patients_with_visit_time = []
+    for idx, p in enumerate(patients):
+        visit_time = (
+            datetime.now() + timedelta(minutes=idx * AVG_VISIT_MIN)
+        ).strftime("%H:%M")
+
+        patient_dict = dict(p)
+        patient_dict["visit_time"] = visit_time
+        patients_with_visit_time.append(patient_dict)
+
     return render_template(
         "doctor.html",
-        patients=patients,
+        patients=patients_with_visit_time,
         username=session.get("username")
     )
+
 
 
 @app.route("/mark_served/<int:patient_id>")
@@ -272,6 +288,7 @@ def doctors():
         "SELECT * FROM doctors"
     ).fetchall()
     conn.close()
+
 
     return render_template("doctors.html", doctors=doctors)
 @app.route("/doctors/edit/<int:doctor_id>", methods=["GET", "POST"])
