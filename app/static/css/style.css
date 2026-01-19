@@ -1,0 +1,35 @@
+/* Tło aplikacji */
+body {
+    background: #f5f7fb;
+}
+
+/* Pasek nawigacji */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Karty (boxy) */
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Przyciski główne */
+.btn-primary {
+    background-color: #1e66ff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0047e1;
+}
+
+/* Nagłówki trochę „mocniejsze” */
+h1, h2, h3 {
+    font-weight: 600;
+}
+
+/* Ładniejsze inputy i select */
+input, select, textarea {
+    border-radius: 8px !important;
+}

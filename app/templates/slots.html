@@ -12,14 +12,13 @@
 <nav class="navbar navbar-dark bg-primary mb-4">
     <div class="container">
         <a class="navbar-brand" href="/">Przychodnia Medyczna</a>
-        <a class="btn btn-light btn-sm" href="/slots">Dostępne terminy</a>
     </div>
 </nav>
 
 <div class="container">
     <h2 class="mb-3">Dostępne terminy wizyt</h2>
 
-    <form class="row g-2 mb-4" method="get" action="/slots">
+    <form id="filters-form" class="row g-2 mb-4" method="get" action="/slots">
         <div class="col-md-4">
             <label class="form-label">Lekarz</label>
             <select class="form-select" name="doctor_id">
@@ -33,11 +32,12 @@
 
         <div class="col-md-4">
             <label class="form-label">Data</label>
-            <input class="form-control" type="date" name="date" value="{{ selected_date }}">
-        </div>
-
-        <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-primary w-100" type="submit">Pokaż terminy</button>
+            <input
+                class="form-control"
+                type="date"
+                name="date"
+                value="{{ selected_date }}"
+            >
         </div>
     </form>
 
@@ -53,11 +53,38 @@
                         <div><strong>{{ s.time }}</strong> — {{ s.doctor_name }}</div>
                         <small class="text-muted">{{ s.date }}</small>
                     </div>
-                    <a class="btn btn-success btn-sm" href="/book?slot_id={{ s.slot_id }}&date={{ selected_date }}">Rezerwuj</a>
+                    <a
+                        class="btn btn-success btn-sm"
+                        href="/book?slot_id={{ s.slot_id }}&date={{ selected_date }}"
+                    >
+                        Rezerwuj
+                    </a>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("filters-form");
+        if (!form) return;
+
+        const doctorSelect = form.querySelector('select[name="doctor_id"]');
+        const dateInput = form.querySelector('input[name="date"]');
+
+        function submitForm() {
+            form.submit();
+        }
+
+        if (doctorSelect) {
+            doctorSelect.addEventListener("change", submitForm);
+        }
+        if (dateInput) {
+            dateInput.addEventListener("change", submitForm);
+        }
+    });
+</script>
+
 </body>
 </html>
