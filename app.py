@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from database import get_conn, init_db
+from database import get_doctor_schedule,add_schedule
 import datetime
 
 app = Flask(__name__)
@@ -101,6 +102,7 @@ def dashboard():
         eta_list=eta_list
     )
 
+
 @app.route("/doctor")
 @login_required
 def doctor_panel():
@@ -116,11 +118,26 @@ def doctor_panel():
     """).fetchall()
     conn.close()
 
+    # dodanie pola 'visit_time' dla każdego pacjenta
+    from datetime import datetime, timedelta
+    AVG_VISIT_MIN = 15
+
+    patients_with_visit_time = []
+    for idx, p in enumerate(patients):
+        visit_time = (
+            datetime.now() + timedelta(minutes=idx * AVG_VISIT_MIN)
+        ).strftime("%H:%M")
+
+        patient_dict = dict(p)
+        patient_dict["visit_time"] = visit_time
+        patients_with_visit_time.append(patient_dict)
+
     return render_template(
         "doctor.html",
-        patients=patients,
+        patients=patients_with_visit_time,
         username=session.get("username")
     )
+
 
 
 @app.route("/mark_served/<int:patient_id>")
@@ -272,6 +289,7 @@ def doctors():
     ).fetchall()
     conn.close()
 
+
     return render_template("doctors.html", doctors=doctors)
 @app.route("/doctors/edit/<int:doctor_id>", methods=["GET", "POST"])
 @login_required
@@ -344,6 +362,27 @@ def reserve_appointment(appointment_id):
     conn.close()
 
     return render_template("reserve_form.html", appointment=appointment)
+@app.route("/doctor/<int:doctor_id>/schedule")
+def doctor_schedule(doctor_id):
+    schedule = get_doctor_schedule(doctor_id)
+    doctor = {"id": doctor_id}
+
+    return render_template(
+        "edit_doctor.html",
+        doctor=doctor,
+        schedule=schedule
+    )
+@app.route("/schedule/add", methods=["POST"])
+def schedule_add():
+    doctor_id = int(request.form["doctor_id"])
+    day_of_week = int(request.form["day"])
+    start_time = request.form["start_time"]
+    end_time = request.form["end_time"]
+
+    add_schedule(doctor_id, day_of_week, start_time, end_time)
+
+    flash("Grafik zapisany ✅", "success")
+    return redirect(f"/doctor/{doctor_id}/schedule")
 
 
 if __name__ == "__main__":
