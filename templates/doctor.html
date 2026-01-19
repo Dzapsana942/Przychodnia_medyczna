@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row mb-3">
+  <div class="col-12">
+    <h3 class="fw-bold text-primary">Panel lekarza</h3>
+    <hr class="border-secondary">
+  </div>
+</div>
+
+
+<!-- Sekcja pacjentów w formie kart -->
+<div class="row g-3">
+  {% for p in patients %}
+  <div class="col-md-4 col-sm-6">
+    <div class="card p-3 shadow-sm patient-card">
+      <h6 class="fw-bold mb-2">{{ p.name }}</h6>
+      <p class="mb-1"><strong>#:</strong> {{ p.position }}</p>
+     <p class="mb-2"><strong>Czas wizyty:</strong> {{ p.visit_time }}</p>
+      <div class="d-flex justify-content-between">
+        <a href="{{ url_for('note', patient_id=p.id) }}" class="btn btn-sm btn-warning">Notatka</a>
+        <a href="{{ url_for('mark_served', patient_id=p.id) }}" class="btn btn-sm btn-success">Obsłużony</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<style>
+.patient-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.patient-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+</style>
+
+
+<!-- Dodatkowy styl -->
+<style>
+.patient-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.patient-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+</style>
+
+{% endblock %}

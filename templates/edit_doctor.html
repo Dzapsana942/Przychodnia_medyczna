@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+
+  <h3 class="mb-4">Edytuj grafik lekarza</h3>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" action="">
+        <div class="mb-3">
+          <label class="form-label">Imię i nazwisko lekarza</label>
+          <input class="form-control" value="{{ doctor.name }}" disabled>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Godziny pracy</label>
+          <input class="form-control" name="hours" value="{{ doctor.hours }}" required>
+        </div>
+        <button class="btn btn-success">Zapisz grafik</button>
+        <a href="{{ url_for('doctors') }}" class="btn btn-secondary ms-2">Anuluj</a>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
