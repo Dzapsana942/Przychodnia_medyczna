@@ -1,20 +1,15 @@
 from datetime import date as dt_date, datetime, timedelta
 import re
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, render_template, request
 
 # ================== APLIKACJA ==================
 
-app = FastAPI(title="Przychodnia Medyczna")
-
-# statyczne pliki (CSS, obrazki itp.)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# szablony HTML
-templates = Jinja2Templates(directory="app/templates")
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates",
+)
 
 # ================== DANE NA SZTYWNO ==================
 
@@ -31,20 +26,18 @@ AVG_VISIT_MIN = 15
 
 # ================== STRONA GŁÓWNA ==================
 
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse("base.html", {"request": request})
+@app.route("/")
+def home():
+    return render_template("base.html")
 
 
 # ================== DOSTĘPNE TERMINY (PACJENT) ==================
 
-@app.get("/slots", response_class=HTMLResponse)
-def show_slots(
-    request: Request,
-    doctor_id: int = 1,
-    date: str | None = None,
-):
-    selected_date = date or dt_date.today().isoformat()
+@app.route("/slots")
+def show_slots():
+    doctor_id = request.args.get("doctor_id", default=1, type=int)
+    selected_date = request.args.get("date") or dt_date.today().isoformat()
+
     all_slots = get_slots_for(selected_date)
 
     # zajęte sloty w danym dniu (wszyscy lekarze)
@@ -60,27 +53,30 @@ def show_slots(
         if s["doctor_id"] == doctor_id and s["slot_id"] not in booked_slot_ids
     ]
 
-    return templates.TemplateResponse(
+    return render_template(
         "slots.html",
-        {
-            "request": request,
-            "doctors": doctors,
-            "slots": slots,
-            "selected_doctor_id": doctor_id,
-            "selected_date": selected_date,
-        },
+        doctors=doctors,
+        slots=slots,
+        selected_doctor_id=doctor_id,
+        selected_date=selected_date,
     )
 
 
 # ================== FORMULARZ REZERWACJI (PACJENT) ==================
 
-@app.get("/book", response_class=HTMLResponse)
-def book_form(request: Request, slot_id: int, date: str):
+@app.route("/book")
+def book_form():
+    slot_id = request.args.get("slot_id", type=int)
+    date = request.args.get("date")
+
+    if slot_id is None or date is None:
+        return "Brak wymaganych parametrów.", 400
+
     all_slots = get_slots_for(date)
     slot = next((s for s in all_slots if s["slot_id"] == slot_id), None)
 
     if slot is None:
-        return HTMLResponse("Nie znaleziono wybranego terminu.", status_code=404)
+        return "Nie znaleziono wybranego terminu.", 404
 
     # sprawdzamy, czy termin nie jest już zajęty
     already_booked = any(
@@ -90,52 +86,54 @@ def book_form(request: Request, slot_id: int, date: str):
         for a in appointments
     )
     if already_booked:
-        return HTMLResponse(
+        return (
             "<h3>Termin zajęty ❌</h3>"
             "<p>Wybrany termin został już zarezerwowany.</p>"
             "<a href='/slots'>Wróć do dostępnych terminów</a>",
-            status_code=400,
+            400,
         )
 
-    return templates.TemplateResponse("book.html", {"request": request, "slot": slot})
+    return render_template("book.html", slot=slot)
 
 
 # ================== POTWIERDZENIE REZERWACJI (ZAPIS + KOLEJKA) ==================
 
-@app.post("/confirm", response_class=HTMLResponse)
-def confirm(
-    request: Request,
-    slot_id: int = Form(...),
-    patient_name: str = Form(...),
-    email: str = Form(...),
-    reason: str = Form(""),
-    date: str = Form(...),
-):
+@app.route("/confirm", methods=["POST"])
+def confirm():
     global next_appointment_id
 
+    slot_id = request.form.get("slot_id", type=int)
+    patient_name = request.form.get("patient_name", "").strip()
+    email = request.form.get("email", "").strip()
+    reason = request.form.get("reason", "")
+    date = request.form.get("date")
+
     # ---- walidacje ----
-    if len(patient_name.strip()) < 3:
-        return HTMLResponse(
+    if len(patient_name) < 3:
+        return (
             "<h3>Błąd ❌</h3>"
             "<p>Imię i nazwisko musi mieć co najmniej 3 znaki.</p>"
             "<a href='/slots'>Wróć</a>",
-            status_code=400,
+            400,
         )
 
     email_regex = r"^[^@]+@[^@]+\.[^@]+$"
     if not re.match(email_regex, email):
-        return HTMLResponse(
+        return (
             "<h3>Błąd ❌</h3>"
             "<p>Niepoprawny adres e-mail.</p>"
             "<a href='/slots'>Wróć</a>",
-            status_code=400,
+            400,
         )
+
+    if slot_id is None or date is None:
+        return "Brak danych rezerwacji.", 400
 
     # ---- szukamy slotu ----
     all_slots = get_slots_for(date)
     slot = next((s for s in all_slots if s["slot_id"] == slot_id), None)
     if slot is None:
-        return HTMLResponse("Nie znaleziono terminu do rezerwacji.", status_code=404)
+        return "Nie znaleziono terminu do rezerwacji.", 404
 
     # czy slot nie został już zajęty?
     if any(
@@ -144,11 +142,11 @@ def confirm(
         and a["status"] == "BOOKED"
         for a in appointments
     ):
-        return HTMLResponse(
+        return (
             "<h3>Termin zajęty ❌</h3>"
             "<p>Wybrany termin został już zarezerwowany.</p>"
             "<a href='/slots'>Wróć do dostępnych terminów</a>",
-            status_code=400,
+            400,
         )
 
     # ---- zapis rezerwacji ----
@@ -182,50 +180,37 @@ def confirm(
     estimated_dt = start + timedelta(minutes=(queue_number - 1) * AVG_VISIT_MIN)
     estimated_time = estimated_dt.strftime("%H:%M")
 
-    return templates.TemplateResponse(
+    return render_template(
         "confirm.html",
-        {
-            "request": request,
-            "patient_name": patient_name,
-            "queue_number": queue_number,
-            "estimated_time": estimated_time,
-            "appointment_id": appt["id"],
-        },
+        patient_name=patient_name,
+        queue_number=queue_number,
+        estimated_time=estimated_time,
+        appointment_id=appt["id"],
     )
 
 
 # ================== ANULOWANIE ==================
 
-@app.get("/cancel/{appointment_id}", response_class=HTMLResponse)
-def cancel_appointment(request: Request, appointment_id: int):
+@app.route("/cancel/<int:appointment_id>")
+def cancel_appointment(appointment_id: int):
     appt = next((a for a in appointments if a["id"] == appointment_id), None)
     if appt is None:
-        return HTMLResponse("Nie znaleziono rezerwacji.", status_code=404)
+        return "Nie znaleziono rezerwacji.", 404
 
     appt["status"] = "CANCELLED"
 
-    return templates.TemplateResponse(
-        "cancel.html",
-        {
-            "request": request,
-            "appointment": appt,
-        },
-    )
+    return render_template("cancel.html", appointment=appt)
 
 
 # ================== ZMIANA REZERWACJI ==================
 
-@app.get("/reschedule/{appointment_id}", response_class=HTMLResponse)
-def reschedule_form(
-    request: Request,
-    appointment_id: int,
-    date: str | None = None,
-):
+@app.route("/reschedule/<int:appointment_id>")
+def reschedule_form(appointment_id: int):
     appt = next((a for a in appointments if a["id"] == appointment_id), None)
     if appt is None or appt["status"] != "BOOKED":
-        return HTMLResponse("Nie znaleziono aktywnej rezerwacji.", status_code=404)
+        return "Nie znaleziono aktywnej rezerwacji.", 404
 
-    selected_date = date or appt["date"]
+    selected_date = request.args.get("date") or appt["date"]
     all_slots = get_slots_for(selected_date)
 
     booked_slot_ids = {
@@ -243,32 +228,30 @@ def reschedule_form(
         and s["slot_id"] not in booked_slot_ids
     ]
 
-    return templates.TemplateResponse(
+    return render_template(
         "reschedule.html",
-        {
-            "request": request,
-            "appointment": appt,
-            "slots": slots,
-            "selected_date": selected_date,
-        },
+        appointment=appt,
+        slots=slots,
+        selected_date=selected_date,
     )
 
 
-@app.post("/reschedule/{appointment_id}", response_class=HTMLResponse)
-def reschedule_save(
-    request: Request,
-    appointment_id: int,
-    slot_id: int = Form(...),
-    date: str = Form(...),
-):
+@app.route("/reschedule/<int:appointment_id>", methods=["POST"])
+def reschedule_save(appointment_id: int):
     appt = next((a for a in appointments if a["id"] == appointment_id), None)
     if appt is None or appt["status"] != "BOOKED":
-        return HTMLResponse("Nie znaleziono aktywnej rezerwacji.", status_code=404)
+        return "Nie znaleziono aktywnej rezerwacji.", 404
+
+    slot_id = request.form.get("slot_id", type=int)
+    date = request.form.get("date")
+
+    if slot_id is None or date is None:
+        return "Brak danych.", 400
 
     all_slots = get_slots_for(date)
     slot = next((s for s in all_slots if s["slot_id"] == slot_id), None)
     if slot is None:
-        return HTMLResponse("Nie znaleziono wybranego terminu.", status_code=404)
+        return "Nie znaleziono wybranego terminu.", 404
 
     if any(
         a["slot_id"] == slot_id
@@ -277,11 +260,11 @@ def reschedule_save(
         and a["id"] != appointment_id
         for a in appointments
     ):
-        return HTMLResponse(
+        return (
             "<h3>Termin zajęty ❌</h3>"
             "<p>Wybrany termin został już zarezerwowany.</p>"
             "<a href='/slots'>Wróć do dostępnych terminów</a>",
-            status_code=400,
+            400,
         )
 
     appt["slot_id"] = slot_id
@@ -303,28 +286,22 @@ def reschedule_save(
     estimated_dt = start + timedelta(minutes=(queue_number - 1) * AVG_VISIT_MIN)
     estimated_time = estimated_dt.strftime("%H:%M")
 
-    return templates.TemplateResponse(
+    return render_template(
         "confirm.html",
-        {
-            "request": request,
-            "patient_name": appt["patient_name"],
-            "queue_number": queue_number,
-            "estimated_time": estimated_time,
-            "appointment_id": appt["id"],
-        },
+        patient_name=appt["patient_name"],
+        queue_number=queue_number,
+        estimated_time=estimated_time,
+        appointment_id=appt["id"],
     )
 
 
 # ================== PANEL REJESTRATORKI ==================
 
-@app.get("/desk", response_class=HTMLResponse)
-def desk(
-    request: Request,
-    doctor_id: int | None = None,
-    date: str | None = None,
-):
+@app.route("/desk")
+def desk():
+    doctor_id = request.args.get("doctor_id", type=int)
     selected_doctor_id = doctor_id or doctors[0]["id"]
-    selected_date = date or dt_date.today().isoformat()
+    selected_date = request.args.get("date") or dt_date.today().isoformat()
 
     all_slots = get_slots_for(selected_date)
 
@@ -342,32 +319,31 @@ def desk(
         and s["slot_id"] not in booked_slot_ids
     ]
 
-    return templates.TemplateResponse(
+    return render_template(
         "desk.html",
-        {
-            "request": request,
-            "doctors": doctors,
-            "selected_doctor_id": selected_doctor_id,
-            "selected_date": selected_date,
-            "free_slots": free_slots,
-            "created_appt": None,
-        },
+        doctors=doctors,
+        selected_doctor_id=selected_doctor_id,
+        selected_date=selected_date,
+        free_slots=free_slots,
+        created_appt=None,
     )
 
 
-@app.post("/desk", response_class=HTMLResponse)
-def desk_add(
-    request: Request,
-    patient_name: str = Form(...),
-    slot_id: int = Form(...),
-    date: str = Form(...),
-):
+@app.route("/desk", methods=["POST"])
+def desk_add():
     global next_appointment_id
+
+    patient_name = request.form.get("patient_name", "").strip()
+    slot_id = request.form.get("slot_id", type=int)
+    date = request.form.get("date")
+
+    if not patient_name or slot_id is None or date is None:
+        return "Brak wymaganych danych.", 400
 
     all_slots = get_slots_for(date)
     slot = next((s for s in all_slots if s["slot_id"] == slot_id), None)
     if slot is None:
-        return HTMLResponse("Nie znaleziono wybranego terminu.", status_code=404)
+        return "Nie znaleziono wybranego terminu.", 404
 
     if any(
         a["slot_id"] == slot_id
@@ -375,11 +351,11 @@ def desk_add(
         and a["status"] == "BOOKED"
         for a in appointments
     ):
-        return HTMLResponse(
+        return (
             "<h3>Termin zajęty ❌</h3>"
             "<p>Wybrany termin został już zarezerwowany.</p>"
             "<a href='/desk'>Wróć do panelu rejestratorki</a>",
-            status_code=400,
+            400,
         )
 
     appt = {
@@ -414,16 +390,13 @@ def desk_add(
         and s["slot_id"] not in booked_slot_ids
     ]
 
-    return templates.TemplateResponse(
+    return render_template(
         "desk.html",
-        {
-            "request": request,
-            "doctors": doctors,
-            "selected_doctor_id": selected_doctor_id,
-            "selected_date": selected_date,
-            "free_slots": free_slots,
-            "created_appt": appt,
-        },
+        doctors=doctors,
+        selected_doctor_id=selected_doctor_id,
+        selected_date=selected_date,
+        free_slots=free_slots,
+        created_appt=appt,
     )
 
 
@@ -467,3 +440,7 @@ def get_slots_for(selected_date: str):
             "time": "11:00",
         },
     ]
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
