@@ -10,7 +10,7 @@
 <!-- Sekcja dodawania lekarza -->
 <div class="card p-3 mb-4 shadow-sm">
   <h5 class="fw-semibold mb-3">Dodaj lekarza</h5>
-  <form method="post" action="{{ url_for('doctors') }}">
+  <form method="post" action="{{ url_for('doctors_view') }}">
     <div class="input-group" style="max-width: 500px;">
       <input type="text" class="form-control" name="name" placeholder="Imię i nazwisko lekarza" required>
       <input type="text" class="form-control" name="hours" placeholder="Godziny pracy (np. 09:00-17:00)" required>
@@ -37,9 +37,18 @@
         <td>{{ loop.index }}</td>
         <td>{{ d.name }}</td>
         <td>{{ d.hours }}</td>
-        <td>
-          <a href="{{ url_for('edit_doctor', doctor_id=d.id) }}" class="btn btn-sm btn-primary">Edytuj grafik</a>
-        </td>
+       <td>
+  <!-- Formularz do usuwania -->
+  <form method="post" action="{{ url_for('delete_doctor', doctor_id=d.id) }}" style="display:inline;">
+    <button class="btn btn-sm btn-danger" onclick="return confirm('Na pewno chcesz usunąć tego lekarza?');">
+      Usuń
+    </button>
+  </form>
+
+  <!-- Edytuj grafik -->
+  <a href="{{ url_for('edit_doctor', doctor_id=d.id) }}" class="btn btn-sm btn-primary ms-2">Edytuj grafik</a>
+</td>
+
       </tr>
       {% endfor %}
     </tbody>

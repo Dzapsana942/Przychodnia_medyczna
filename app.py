@@ -73,14 +73,17 @@ def get_slots_for(selected_date: str):
 # HELPERS
 # ---------------------------
 
+from functools import wraps
+
 def login_required(view):
+    @wraps(view)
     def wrapper(*args, **kwargs):
         if 'user_id' not in session:
             flash("Musisz się zalogować!", "danger")
             return redirect(url_for('login'))
         return view(*args, **kwargs)
-    wrapper.__name__ = view.__name__
     return wrapper
+
 
 
 def get_eta(position, avg_minutes=15):
@@ -356,16 +359,21 @@ def edit_doctor(doctor_id):
     conn = get_conn()
 
     if request.method == "POST":
+        # Odbieramy dane z formularza
+        name = request.form["name"]
         hours = request.form["hours"]
+
+        # Aktualizujemy zarówno imię/nazwisko, jak i godziny
         conn.execute(
-            "UPDATE doctors SET hours=? WHERE id=?",
-            (hours, doctor_id)
+            "UPDATE doctors SET name=?, hours=? WHERE id=?",
+            (name, hours, doctor_id)
         )
         conn.commit()
         conn.close()
-        flash("Grafik zaktualizowany!", "success")
+        flash("Dane lekarza zaktualizowane!", "success")
         return redirect(url_for("doctors_view"))
 
+    # Pobieramy dane lekarza
     doctor = conn.execute(
         "SELECT * FROM doctors WHERE id=?",
         (doctor_id,)
@@ -373,8 +381,16 @@ def edit_doctor(doctor_id):
     conn.close()
 
     return render_template("edit_doctor.html", doctor=doctor)
+@login_required
+def delete_doctor(doctor_id):
+    conn = get_conn()
+    conn.execute("DELETE FROM doctors WHERE id=?", (doctor_id,))
+    conn.commit()
+    conn.close()
+    flash("Lekarz został usunięty!", "success")
+    return redirect(url_for("doctors_view"))
 
-
+app.add_url_rule('/doctors/delete/<int:doctor_id>', view_func=delete_doctor, methods=['POST'])
 @app.route("/appointments")
 @login_required
 def appointments_view():
@@ -447,7 +463,7 @@ def schedule_add():
 
     add_schedule(doctor_id, day_of_week, start_time, end_time)
 
-    flash("Grafik zapisany ✅", "success")
+    flash("Grafik zapisany", "success")
     return redirect(f"/doctor/{doctor_id}/schedule")
 
 
@@ -811,3 +827,4 @@ def desk_add():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

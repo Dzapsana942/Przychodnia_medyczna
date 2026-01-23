@@ -12,14 +12,42 @@
 </head>
 <body>
 <nav class="navbar navbar-dark bg-primary mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <span class="navbar-brand">Przychodnia Medyczna</span>
-        <div>
-            <a class="btn btn-light btn-sm" href="{{ url_for('show_slots') }}">Dostępne terminy</a>
-            <a class="btn btn-outline-light btn-sm" href="{{ url_for('login') }}">Panel personelu</a>
-        </div>
+  <div class="container d-flex justify-content-between align-items-center">
+
+    <!-- Lewa strona -->
+    <span class="navbar-brand fw-bold fs-4">
+      Przychodnia Medyczna
+    </span>
+
+    <!-- Prawa strona -->
+    <div class="d-flex align-items-center gap-2">
+
+      {% if username %}
+        <span class="text-white me-2">
+          Zalogowany: <strong>{{ username }}</strong>
+        </span>
+
+        <a class="btn btn-light btn-sm" href="{{ url_for('doctors_view') }}">
+          Grafiki lekarzy
+        </a>
+
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">
+          Wyloguj
+        </a>
+      {% else %}
+        <a class="btn btn-light btn-sm" href="{{ url_for('show_slots') }}">
+          Dostępne terminy
+        </a>
+
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('login') }}">
+          Panel personelu
+        </a>
+      {% endif %}
+
     </div>
+  </div>
 </nav>
+
 
 <div class="container">
     {% block content %}

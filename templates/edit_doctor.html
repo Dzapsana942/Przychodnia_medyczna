@@ -9,14 +9,14 @@
       <form method="post" action="">
         <div class="mb-3">
           <label class="form-label">Imię i nazwisko lekarza</label>
-          <input class="form-control" value="{{ doctor.name }}" disabled>
+          <input class="form-control" name='name' value="{{ doctor.name }}" required>
         </div>
         <div class="mb-3">
           <label class="form-label">Godziny pracy</label>
           <input class="form-control" name="hours" value="{{ doctor.hours }}" required>
         </div>
         <button class="btn btn-success">Zapisz grafik</button>
-        <a href="{{ url_for('doctors') }}" class="btn btn-secondary ms-2">Anuluj</a>
+        <a href="{{ url_for('doctors_view') }}" class="btn btn-secondary ms-2">Anuluj</a>
       </form>
     </div>
   </div>
