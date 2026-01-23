@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel rejestratorki – dodanie pacjenta</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+        <span class="navbar-brand">Panel rejestratorki</span>
+        <a class="btn btn-light btn-sm" href="/slots">Dostępne terminy (widok pacjenta)</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h3 class="mb-3">Dodaj pacjenta do kolejki</h3>
+
+    {% if created_appt %}
+    <div class="alert alert-success">
+        Dodano pacjenta <strong>{{ created_appt.patient_name }}</strong><br>
+        Lekarz: <strong>{{ created_appt.doctor_name }}</strong><br>
+        Termin: <strong>{{ created_appt.date }} {{ created_appt.time }}</strong><br>
+        Numer w kolejce: <strong>{{ queue_number }}</strong><br>
+        Przybliżony czas wejścia: <strong>{{ estimated_time }}</strong>
+    </div>
+{% endif %}
+
+
+    <!-- Filtry: lekarz + data -->
+    <form id="desk-filters" class="row g-2 mb-4" method="get" action="/desk">
+        <div class="col-md-4">
+            <label class="form-label">Lekarz</label>
+            <select class="form-select" name="doctor_id">
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {% if d.id == selected_doctor_id %}selected{% endif %}>
+                        {{ d.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Data</label>
+            <input
+                class="form-control"
+                type="date"
+                name="date"
+                value="{{ selected_date }}"
+            >
+        </div>
+    </form>
+
+    <!-- Formularz dodania pacjenta -->
+    <form method="post" action="/desk">
+        <div class="mb-3">
+            <label class="form-label">Imię i nazwisko pacjenta</label>
+            <input class="form-control" name="patient_name" required minlength="3">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Wolny termin</label>
+            <select class="form-select" name="slot_id" required>
+                {% if free_slots|length == 0 %}
+                    <option value="">Brak wolnych terminów</option>
+                {% else %}
+                    {% for s in free_slots %}
+                        <option value="{{ s.slot_id }}">
+                            {{ s.time }} — {{ s.doctor_name }} ({{ s.date }})
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
+        <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <button class="btn btn-success" type="submit" {% if free_slots|length == 0 %}disabled{% endif %}>
+            Dodaj pacjenta
+        </button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("desk-filters");
+        if (!form) return;
+
+        const doctorSelect = form.querySelector('select[name="doctor_id"]');
+        const dateInput = form.querySelector('input[name="date"]');
+
+        function submitForm() {
+            form.submit();
+        }
+
+        if (doctorSelect) {
+            doctorSelect.addEventListener("change", submitForm);
+        }
+        if (dateInput) {
+            dateInput.addEventListener("change", submitForm);
+        }
+    });
+</script>
+
+</body>
+</html>

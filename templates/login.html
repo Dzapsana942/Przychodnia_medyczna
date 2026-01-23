@@ -1,20 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <h3>Logowanie</h3>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+  <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
+    <h3 class="card-title text-center mb-3">Logowanie</h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ 'danger' if category=='danger' else 'success' }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <form method="post">
       <div class="mb-3">
         <label class="form-label">Nazwa użytkownika</label>
-        <input class="form-control" name="username" required>
+        <input type="text" name="username" class="form-control" placeholder="Wpisz login" required>
       </div>
       <div class="mb-3">
         <label class="form-label">Hasło</label>
-        <input class="form-control" type="password" name="password" required>
+        <input type="password" name="password" class="form-control" placeholder="Wpisz hasło" required>
       </div>
-      <button class="btn btn-primary">Zaloguj</button>
+      <button type="submit" class="btn btn-primary w-100">Zaloguj się</button>
     </form>
-    <p class="mt-3"><small>Użytkownik: <strong>rejestratorka</strong>, hasło: <strong>haslo123</strong></small></p>
   </div>
 </div>
 {% endblock %}
