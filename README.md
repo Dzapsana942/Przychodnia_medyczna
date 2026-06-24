@@ -14,7 +14,6 @@ Projekt został wykonany w ramach zajęć akademickich.
 
 - **Roksana** – część pacjenta + system rezerwacji wizyt (publiczna)
 - **Ania** – panel rejestratorki, panel lekarza, logowanie i baza danych  
-- *(trzeci członek zespołu nie brał udziału w finalnej wersji projektu)*
 
 ---
 
